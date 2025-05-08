@@ -9,7 +9,7 @@ public class MediaControls : MonoBehaviour
     private bool started = false;
     private bool isShuffle = false;
     private bool isPlay = false;
-    const int NUMBER_TRACKS = 29;
+    const int NUMBER_TRACKS = 12;
     private string componentName;  // Renamed variable
     [SerializeField] private AudioClip[] library = new AudioClip[0];
     private int[] trackHistory = new int[NUMBER_TRACKS];
@@ -54,30 +54,36 @@ public class MediaControls : MonoBehaviour
     }
 
     private void playToggle(){ 
-        if(music.isPlaying){
-            isPlay = false;
-            music.Pause();
-        } else if(!music.isPlaying) {
-            if(!started){
-                music.Play();
-                started = true;
+    if(music.isPlaying){
+        isPlay = false;
+        music.Pause();
+    } else if(!music.isPlaying) {
+        if(!started){
+            if(isShuffle){
+                songNumber = Random.Range(0, NUMBER_TRACKS);
+                music.clip = (library[songNumber]);
             }
-            else{
-                isPlay = true;
-                music.UnPause();
-            }
+            isPlay = true;  // Add this line
+            music.Play();
+            started = true;
+        }
+        else{
+            isPlay = true;
+            music.UnPause();
         }
     }
+}
     private void playNext(){
         Debug.Log($"Track Index is: {trackIndex}");
-        if(music.isPlaying){
+        
             if(trackIndex >= NUMBER_TRACKS)
                 trackIndex = 0;
             if(trackIndex < 0)
                 trackIndex = NUMBER_TRACKS-1;
             trackHistory[trackIndex] = songNumber;
             trackIndex++;
-        }
+
+
         if(isShuffle)
             songNumber = Random.Range(0, NUMBER_TRACKS);
         else
@@ -87,6 +93,7 @@ public class MediaControls : MonoBehaviour
             songNumber = 0;
 
         music.clip = (library[songNumber]);
+        started = true;
         isPlay = true;
         music.Play();
     }

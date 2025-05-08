@@ -6,8 +6,8 @@ using UnityEngine;
 public class Background : MonoBehaviour
 {
     private SpriteRenderer spriteRen;
-    [SerializeField] const int NumOfSprites = 29;
-    [SerializeField] private float bgTimer = 60f;
+    [SerializeField] const int NumOfSprites = 10;
+    [SerializeField] private float bgTimer = 42f;
     [SerializeField] private Sprite[] sprites = new Sprite[NumOfSprites];
     // Start is called before the first frame update
     void Start()

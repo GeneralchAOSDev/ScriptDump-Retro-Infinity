@@ -2,7 +2,7 @@ using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-
+using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Animations;
@@ -51,9 +51,16 @@ public class GridScript : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
+    private void Awake()
+    {
+        activeFunctions = 0;
+        score = 0;
+
+        grid = new byte[COLUMNS, ROWS];
+    }
     void Start()
     {
+        
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
         DOTween.SetTweensCapacity(200, 125);
@@ -90,7 +97,7 @@ public class GridScript : MonoBehaviour
             difficulty = 9;
         tiles = new Dictionary<Vector2Int, Tile>();
         
-        Vector3 cameraPos = new Vector3(((float)ROWS / 2 - 0.5f)-2.5f, -((float)COLUMNS / 2 + 0.5f)-3.4f, -10);
+        Vector3 cameraPos = new Vector3(((float)ROWS / 2 - 0.5f)-2.5f, -((float)COLUMNS / 2 + 0.5f)-2.8f, -10);
         
         for (int iY = 0; iY < ROWS; iY++){
             for (int iX = 0; iX < COLUMNS; iX++){
@@ -294,6 +301,16 @@ public class GridScript : MonoBehaviour
         Debug.Log(debugGrid.ToString());
         #endif
     }
+
+    IEnumerator showScore(Tile tile, int score) {
+
+        TMP_Text txt = tile.GetComponentInChildren<TMP_Text>();
+
+        txt.text = $"+{score}";
+        txt.enabled = true;
+        yield return new WaitForSeconds(ANIMATION_DURATION+0.4f);
+        txt.enabled = false;
+    }
     
     IEnumerator lightUp(Tile tile){
 
@@ -301,7 +318,7 @@ public class GridScript : MonoBehaviour
         
         // Cache target values to reduce allocations
         float startIntensity = point.intensity;
-        float maxIntensity = startIntensity + 8f;
+        float maxIntensity = startIntensity + 2f;
         float halfDuration = ANIMATION_DURATION/2;
         
         //point.DOKill(); // Kill any existing tweens
@@ -318,13 +335,15 @@ public class GridScript : MonoBehaviour
         int matches = matchList.Count;
         for(int i = 0; i < matches; i++) {
             //Debug.Log($"DEBUG Match number: {i+1} Location(x, y): ({matchList[i].locX}, {matchList[i].locY}) Size: {matchList[i].length} Direction: {(matchList[i].verticle?"Verticle":"Horizontal")}\n");
-            score += matchList[i].type+(difficulty*matchList[i].length);
-            if(score > scoreCheck){
+            int calScore = (matchList[i].type+difficulty)*matchList[i].length;
+            score += calScore;
+            if(score > scoreCheck && loaded){
                 difficulty++;
                 if(difficulty > 9)
                     difficulty = 9;
                 scoreCheck += 1000;
             }
+
             //Debug.Log ($"Score = {score}");
             if(matchList[i].verticle){
                 for(int p = matchList[i].locY; p < (matchList[i].length+matchList[i].locY); p++) {
@@ -333,6 +352,8 @@ public class GridScript : MonoBehaviour
                     var matTile = GetTileAtPos(pos);
                     yield return null; 
                     matTile.GetComponent<Animator>().SetTrigger("Pop");
+                    if(p == (matchList[i].length+matchList[i].locY)/2)
+                        StartCoroutine(showScore(matTile, calScore));
                     StartCoroutine(lightUp(matTile));
                     if(loaded)
                         AudioSource.PlayClipAtPoint(audioC[type], new Vector3(1, 1, 1));
@@ -347,6 +368,8 @@ public class GridScript : MonoBehaviour
                     GetTileAtPos(pos).GetComponent<Animator>().SetTrigger("Pop");
                     matTile.GetComponent<Animator>().SetTrigger("Pop");
                     StartCoroutine(lightUp(matTile));
+                    if(p == (matchList[i].length+matchList[i].locX)/2)
+                        StartCoroutine(showScore(matTile, calScore));
                     if(loaded)
                         AudioSource.PlayClipAtPoint(audioC[type], new Vector3(1, 1, 1));
                     grid[p, matchList[i].locY] = 0;
